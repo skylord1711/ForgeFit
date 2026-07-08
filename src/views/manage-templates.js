@@ -3,6 +3,7 @@ import { hapticLight, hapticMedium } from '../utils/haptics.js';
 import { generateId } from '../utils/helpers.js';
 import db from '../db.js';
 import { showModal, closeModal, renderModal, renderFormField } from '../components/modal.js';
+import router from '../router.js';
 
 let templates = [];
 
@@ -83,7 +84,7 @@ function setupListeners() {
   const container = document.getElementById('view-container');
 
   container.querySelectorAll('[data-nav]').forEach(el => {
-    el.addEventListener('click', () => window.location.hash = el.dataset.nav);
+    el.addEventListener('click', () => router.navigate(el.dataset.nav));
   });
 
   container.querySelector('[data-action="create-template"]')?.addEventListener('click', () => {

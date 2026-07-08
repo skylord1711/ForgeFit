@@ -2,6 +2,7 @@ import { html } from '../utils/helpers.js';
 import { getCurrentDateFormatted, getCurrentTimeFormatted, getTodayKey, getYesterdayKey, formatDateFull, formatTime, formatDuration, getElapsedSeconds } from '../utils/time.js';
 import { hapticMedium, hapticLight } from '../utils/haptics.js';
 import db from '../db.js';
+import router from '../router.js';
 
 export async function renderHome() {
   const today = getTodayKey();
@@ -135,11 +136,7 @@ function restDayCard(workout) {
         <span class="chip chip-purple">📊 Review</span>
       </div>
       <div class="flex flex-col gap-8">
-        <button class="btn btn-primary" data-start-workout>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          Start Workout
-        </button>
-        <button class="btn btn-ghost" data-nav="history">History</button>
+        <button class="btn btn-ghost" data-nav="history" style="background:var(--surface);">History</button>
         <button class="btn btn-ghost" data-nav="prs">Personal Records</button>
         <button class="btn btn-ghost" data-undo-rest-day style="color:var(--orange);">Undo Rest Day</button>
       </div>
@@ -184,13 +181,13 @@ function startWorkoutButton() {
 function setupHomeListeners(container) {
   container.querySelectorAll('[data-nav]').forEach(el => {
     el.addEventListener('click', () => {
-      window.location.hash = el.dataset.nav;
+      router.navigate(el.dataset.nav);
     });
   });
 
   container.querySelectorAll('[data-view-summary]').forEach(el => {
     el.addEventListener('click', () => {
-      window.location.hash = `workout-summary/${el.dataset.viewSummary}`;
+      router.navigate(`workout-summary/${el.dataset.viewSummary}`);
     });
   });
 
@@ -220,16 +217,5 @@ function setupHomeListeners(container) {
     });
   });
 
-  container.querySelectorAll('[data-start-workout]').forEach(el => {
-    el.addEventListener('click', async () => {
-      hapticLight();
-      const today = getTodayKey();
-      const allWorkouts = await db.getAll('workouts');
-      const todaysRest = allWorkouts.filter(w => w.date === today && w.isRestDay);
-      for (const w of todaysRest) {
-        await db.remove('workouts', w.id);
-      }
-      window.location.hash = 'choose-workout';
-    });
-  });
+
 }

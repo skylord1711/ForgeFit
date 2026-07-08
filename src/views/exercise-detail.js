@@ -2,6 +2,7 @@ import { html } from '../utils/helpers.js';
 import { formatDate, formatTime, formatDuration } from '../utils/time.js';
 import db from '../db.js';
 import { hapticLight } from '../utils/haptics.js';
+import router from '../router.js';
 
 export async function renderExerciseDetail(exerciseName) {
   const allWorkouts = await db.getAll('workouts');
@@ -98,5 +99,5 @@ export async function renderExerciseDetail(exerciseName) {
     </div>
   `;
 
-  container.querySelector('[data-nav="prs"]')?.addEventListener('click', () => window.location.hash = 'prs');
+  container.querySelector('[data-nav="prs"]')?.addEventListener('click', () => router.navigate('prs'));
 }

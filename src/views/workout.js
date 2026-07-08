@@ -3,6 +3,7 @@ import { generateId } from '../utils/helpers.js';
 import { formatTime, formatDuration, getElapsedSeconds, getTodayKey } from '../utils/time.js';
 import { hapticLight, hapticMedium, hapticSuccess } from '../utils/haptics.js';
 import db from '../db.js';
+import router from '../router.js';
 import { startTimer, stopTimer, renderTimerDisplay } from '../components/timer.js';
 import { renderExerciseCard, setupExerciseCardListeners } from '../components/exercise-card.js';
 import { showModal, closeModal, renderModal, renderFormField } from '../components/modal.js';
@@ -30,7 +31,7 @@ export async function renderWorkout() {
         </div>
       </div>
     `;
-    container.querySelector('[data-nav="home"]')?.addEventListener('click', () => window.location.hash = 'home');
+    container.querySelector('[data-nav="home"]')?.addEventListener('click', () => router.navigate('home'));
     return;
   }
 
@@ -137,7 +138,7 @@ function setupListeners() {
   const container = document.getElementById('view-container');
 
   container.querySelectorAll('[data-nav]').forEach(el => {
-    el.addEventListener('click', () => window.location.hash = el.dataset.nav);
+    el.addEventListener('click', () => router.navigate(el.dataset.nav));
   });
 
   document.getElementById('finish-workout-btn')?.addEventListener('click', finishWorkout);
@@ -290,7 +291,7 @@ async function doFinishWorkout() {
   showConfetti();
 
   setTimeout(() => {
-    window.location.hash = 'home';
+    router.navigate('home');
   }, 600);
 }
 

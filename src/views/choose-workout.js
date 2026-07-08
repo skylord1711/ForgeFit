@@ -4,6 +4,7 @@ import { generateId } from '../utils/helpers.js';
 import { getTodayKey } from '../utils/time.js';
 import db from '../db.js';
 import { showModal, closeModal, renderModal, renderFormField } from '../components/modal.js';
+import router from '../router.js';
 
 let templates = [];
 let selectedTemplate = null;
@@ -87,7 +88,7 @@ function setupListeners() {
   const container = document.getElementById('view-container');
 
   container.querySelectorAll('[data-nav]').forEach(el => {
-    el.addEventListener('click', () => window.location.hash = el.dataset.nav);
+    el.addEventListener('click', () => router.navigate(el.dataset.nav));
   });
 
   container.querySelectorAll('[data-select]').forEach(el => {
@@ -135,7 +136,7 @@ async function startWorkoutWithTemplate(template) {
 
   const existingActive = existing.find(w => w.date === today && !w.completed);
   if (existingActive) {
-    window.location.hash = 'workout';
+    router.navigate('workout');
     return;
   }
 
@@ -151,7 +152,7 @@ async function startWorkoutWithTemplate(template) {
     completed: false
   };
   await db.put('workouts', workout);
-  window.location.hash = 'workout';
+  router.navigate('workout');
 }
 
 async function markRestDay() {
@@ -186,7 +187,7 @@ async function markRestDay() {
     notes: ''
   };
   await db.put('workouts', restDay);
-  window.location.hash = 'home';
+  router.navigate('home');
 }
 
 function showTemplateOptions(template) {

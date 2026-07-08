@@ -4,6 +4,7 @@ class Router {
     this.currentRoute = null;
     this.currentParams = {};
     window.addEventListener('hashchange', () => this.resolve());
+    window.addEventListener('popstate', () => this.resolve());
   }
 
   add(pattern, handler) {
@@ -12,7 +13,8 @@ class Router {
   }
 
   navigate(path) {
-    window.location.hash = path;
+    history.replaceState(null, '', `#${path}`);
+    this.resolve();
   }
 
   resolve() {

@@ -1,4 +1,5 @@
 import { html } from '../utils/helpers.js';
+import router from '../router.js';
 
 export function renderBottomNav(activeRoute) {
   const nav = document.getElementById('bottom-nav');
@@ -21,7 +22,7 @@ export function renderBottomNav(activeRoute) {
 
   nav.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
-      window.location.hash = btn.dataset.nav;
+      router.navigate(btn.dataset.nav);
     });
   });
 }
