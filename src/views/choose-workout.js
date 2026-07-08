@@ -59,8 +59,9 @@ function render() {
                 </button>
               </div>
             </div>
-            <div style="padding:0 16px 12px;font-size:13px;color:var(--text-tertiary);">
+            <div style="padding:0 16px 12px;font-size:13px;color:var(--text-tertiary);cursor:pointer;" data-edit-exercises="${t.id}" title="Tap to edit exercises">
               ${(t.exercises || []).map(e => e.name).join(' · ')}
+              <span style="color:var(--text-tertiary);margin-left:6px;font-size:12px;">✏️</span>
             </div>
           </div>
         `).join('') : html`
@@ -99,6 +100,16 @@ function setupListeners() {
       const id = el.dataset.templateOptions;
       const template = templates.find(t => t.id === id);
       if (template) showTemplateOptions(template);
+    });
+  });
+
+  container.querySelectorAll('[data-edit-exercises]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hapticLight();
+      const id = el.dataset.editExercises;
+      const template = templates.find(t => t.id === id);
+      if (template) showEditExercisesModal(template);
     });
   });
 
