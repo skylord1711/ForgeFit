@@ -23,7 +23,9 @@ export async function renderHome() {
 
     let mainContent = '';
 
-    if (todayWorkout) {
+    if (todayWorkout?.isRestDay) {
+      mainContent = restDayCard(todayWorkout);
+    } else if (todayWorkout) {
       mainContent = completedWorkoutCard(todayWorkout);
     } else if (activeWorkout) {
       const elapsed = getElapsedSeconds(activeWorkout.startTime);
@@ -114,6 +116,37 @@ function completedWorkoutCard(workout) {
   `;
 }
 
+function restDayCard(workout) {
+  return html`
+    <div class="glass complete-card animate-scale-in mt-8">
+      <div style="font-size:48px;text-align:center;margin-bottom:12px;">🛌</div>
+      <div class="complete-title" style="color:var(--purple);">Rest Day</div>
+      <div style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;text-align:center;">
+        ${formatDateFull(workout.date)}
+      </div>
+      <div class="complete-message" style="margin-bottom:20px;">
+        Recovery is just as important as training.<br>
+        Take the day off and come back stronger tomorrow.
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px;">
+        <span class="chip chip-purple">😴 Sleep</span>
+        <span class="chip chip-purple">💪 Protein</span>
+        <span class="chip chip-purple">💧 Hydrate</span>
+        <span class="chip chip-purple">📊 Review</span>
+      </div>
+      <div class="flex flex-col gap-8">
+        <button class="btn btn-primary" data-start-workout>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Start Workout
+        </button>
+        <button class="btn btn-ghost" data-nav="history">History</button>
+        <button class="btn btn-ghost" data-nav="prs">Personal Records</button>
+        <button class="btn btn-ghost" data-undo-rest-day style="color:var(--orange);">Undo Rest Day</button>
+      </div>
+    </div>
+  `;
+}
+
 function activeWorkoutCard(workout, elapsed) {
   return html`
     <div class="glass animate-scale-in mt-8" style="padding:24px;">
@@ -171,6 +204,32 @@ function setupHomeListeners(container) {
         await db.remove('workouts', w.id);
       }
       renderHome();
+    });
+  });
+
+  container.querySelectorAll('[data-undo-rest-day]').forEach(el => {
+    el.addEventListener('click', async () => {
+      hapticLight();
+      const today = getTodayKey();
+      const allWorkouts = await db.getAll('workouts');
+      const todaysRest = allWorkouts.filter(w => w.date === today && w.isRestDay);
+      for (const w of todaysRest) {
+        await db.remove('workouts', w.id);
+      }
+      renderHome();
+    });
+  });
+
+  container.querySelectorAll('[data-start-workout]').forEach(el => {
+    el.addEventListener('click', async () => {
+      hapticLight();
+      const today = getTodayKey();
+      const allWorkouts = await db.getAll('workouts');
+      const todaysRest = allWorkouts.filter(w => w.date === today && w.isRestDay);
+      for (const w of todaysRest) {
+        await db.remove('workouts', w.id);
+      }
+      window.location.hash = 'choose-workout';
     });
   });
 }

@@ -173,62 +173,20 @@ async function markRestDay() {
     }
   }
 
-  const prs = await db.getAll('prs');
-  const recentPRs = prs.slice(-3).reverse();
-  const todayDate = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(new Date());
-
-  const container = document.getElementById('view-container');
-  container.innerHTML = html`
-    <div class="page">
-      <div class="page-header">
-        <button class="btn btn-ghost" data-nav="home" style="padding-left:0;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-          Home
-        </button>
-      </div>
-      <div class="glass complete-card animate-scale-in mt-8">
-        <div class="rest-day-icon" style="font-size:48px;margin-bottom:12px;">🛌</div>
-        <div class="complete-title" style="color:var(--purple);">Rest Day</div>
-        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;">
-          ${todayDate}
-        </div>
-        <div class="complete-message" style="margin-bottom:20px;">
-          Recovery is just as important as training.<br>
-          Take the day off and come back stronger tomorrow.
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px;">
-          <span class="chip chip-purple">😴 Sleep</span>
-          <span class="chip chip-purple">💪 Protein</span>
-          <span class="chip chip-purple">💧 Hydrate</span>
-          <span class="chip chip-purple">📊 Review</span>
-        </div>
-        ${recentPRs.length ? html`
-          <div style="background:var(--surface);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:20px;text-align:left;">
-            <div style="font-size:12px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Recent PRs</div>
-            ${recentPRs.map(p => html`
-              <div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px solid var(--border-light);">
-                <span style="color:var(--text-secondary);">${p.exerciseName}</span>
-                <span style="color:var(--accent);font-weight:600;">${p.value}${p.unit ? ' ' + p.unit : ''}</span>
-              </div>
-            `).join('')}
-          </div>
-        ` : ''}
-        <div class="flex flex-col gap-8">
-          <button class="btn btn-primary" data-nav="choose-workout">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Start Workout
-          </button>
-          <button class="btn btn-secondary" data-nav="history" style="background:var(--surface);">History</button>
-          <button class="btn btn-ghost" data-nav="prs">Personal Records</button>
-          <button class="btn btn-ghost" data-undo-rest-day style="color:var(--orange);">Undo Rest Day</button>
-        </div>
-      </div>
-    </div>
-  `;
-  container.querySelector('[data-nav="home"]')?.addEventListener('click', () => window.location.hash = 'home');
-  container.querySelector('[data-undo-rest-day]')?.addEventListener('click', () => {
-    window.location.hash = 'choose-workout';
-  });
+  const restDay = {
+    id: generateId(),
+    name: 'Rest Day',
+    date: today,
+    completed: true,
+    isRestDay: true,
+    startTime: null,
+    finishTime: null,
+    duration: null,
+    exercises: [],
+    notes: ''
+  };
+  await db.put('workouts', restDay);
+  window.location.hash = 'home';
 }
 
 function showTemplateOptions(template) {
