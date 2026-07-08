@@ -1,6 +1,6 @@
 import { html } from '../utils/helpers.js';
 import { getCurrentDateFormatted, getCurrentTimeFormatted, getTodayKey, getYesterdayKey, formatDateFull, formatTime, formatDuration, getElapsedSeconds } from '../utils/time.js';
-import { hapticMedium } from '../utils/haptics.js';
+import { hapticMedium, hapticLight } from '../utils/haptics.js';
 import db from '../db.js';
 
 export async function renderHome() {
@@ -108,6 +108,7 @@ function completedWorkoutCard(workout) {
         <button class="btn btn-secondary" data-view-summary="${workout.id}">View Workout Summary</button>
         <button class="btn btn-ghost" data-nav="history">History</button>
         <button class="btn btn-ghost" data-nav="prs">Personal Records</button>
+        <button class="btn btn-ghost" data-restart-today style="color:var(--orange);">Restart Today</button>
       </div>
     </div>
   `;
@@ -157,6 +158,19 @@ function setupHomeListeners(container) {
   container.querySelectorAll('[data-view-summary]').forEach(el => {
     el.addEventListener('click', () => {
       window.location.hash = `workout-summary/${el.dataset.viewSummary}`;
+    });
+  });
+
+  container.querySelectorAll('[data-restart-today]').forEach(el => {
+    el.addEventListener('click', async () => {
+      hapticLight();
+      const today = getTodayKey();
+      const allWorkouts = await db.getAll('workouts');
+      const todaysWorkouts = allWorkouts.filter(w => w.date === today);
+      for (const w of todaysWorkouts) {
+        await db.remove('workouts', w.id);
+      }
+      renderHome();
     });
   });
 }

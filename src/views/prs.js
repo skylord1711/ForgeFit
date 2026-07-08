@@ -32,6 +32,10 @@ function render() {
           <div class="page-title" style="font-size:24px;">Personal Records</div>
           <div class="page-subtitle">${allPrs.length} total PRs</div>
         </div>
+        <button class="btn btn-primary" id="add-pr-btn" style="min-height:44px;padding:10px 16px;font-size:14px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add PR
+        </button>
       </div>
 
       ${filterExercise ? html`
@@ -74,7 +78,7 @@ function render() {
         <div class="empty-state">
           <div class="empty-state-icon">🏆</div>
           <div class="empty-state-title">${allPrs.length ? 'No PRs for this exercise' : 'No Personal Records Yet'}</div>
-          <div class="empty-state-text">${allPrs.length ? 'Select a different exercise above.' : 'Save a PR during a workout to track your progress.'}</div>
+          <div class="empty-state-text">${allPrs.length ? 'Select a different exercise above.' : 'Tap Add PR to create your first one.'}</div>
         </div>
       `}
     </div>
@@ -110,8 +114,64 @@ function setupListeners() {
       }
     });
   });
+
+  document.getElementById('add-pr-btn')?.addEventListener('click', () => {
+    hapticLight();
+    showAddPRModal();
+  });
 }
 
-export async function savePRFromWorkout(exerciseName, defaultWeight, defaultReps, workoutName) {
+function showAddPRModal() {
+  const body = html`
+    ${renderFormField('Exercise Name', html`<input class="input" id="manual-pr-exercise" type="text" placeholder="e.g. Bench Press" autocomplete="off" />`)}
+    ${renderFormField('PR Name', html`<select class="input" id="manual-pr-name">
+      <option value="Highest Weight">Highest Weight</option>
+      <option value="Best Set">Best Set</option>
+      <option value="Best Set of 5">Best Set of 5</option>
+      <option value="Best Set of 8">Best Set of 8</option>
+      <option value="Best Set of 10">Best Set of 10</option>
+      <option value="Estimated 1RM">Estimated 1RM</option>
+      <option value="Custom">Custom</option>
+    </select>`)}
+    ${renderFormField('Value', html`<input class="input" id="manual-pr-value" type="text" placeholder="e.g. 225" autocomplete="off" />`)}
+    ${renderFormField('Unit (optional)', html`<input class="input" id="manual-pr-unit" type="text" placeholder="lb, kg, reps, min:sec" autocomplete="off" />`)}
+    ${renderFormField('Date', html`<input class="input" id="manual-pr-date" type="date" value="${getTodayKey()}" />`)}
+    ${renderFormField('Workout (optional)', html`<input class="input" id="manual-pr-workout" type="text" placeholder="e.g. Push Day" autocomplete="off" />`)}
+    ${renderFormField('Notes (optional)', html`<input class="input" id="manual-pr-notes" type="text" placeholder="How did this feel?" autocomplete="off" />`)}
+  `;
+  showModal(renderModal('New Personal Record', body, html`
+    <button class="btn btn-primary" id="save-manual-pr-btn">Save PR</button>
+    <button class="btn btn-ghost" data-close-modal>Cancel</button>
+  `));
 
+  document.querySelector('[data-close-modal]')?.addEventListener('click', closeModal);
+  document.getElementById('save-manual-pr-btn')?.addEventListener('click', async () => {
+    const exerciseName = document.getElementById('manual-pr-exercise')?.value.trim();
+    const prName = document.getElementById('manual-pr-name')?.value;
+    const value = document.getElementById('manual-pr-value')?.value.trim();
+    const unit = document.getElementById('manual-pr-unit')?.value.trim();
+    const date = document.getElementById('manual-pr-date')?.value || getTodayKey();
+    const workoutName = document.getElementById('manual-pr-workout')?.value.trim();
+    const notes = document.getElementById('manual-pr-notes')?.value.trim();
+
+    if (!exerciseName) { alert('Enter an exercise name.'); return; }
+    if (!value) { alert('Enter a value.'); return; }
+
+    const pr = {
+      id: generateId(),
+      exerciseName,
+      prName,
+      value,
+      unit: unit || '',
+      date,
+      workoutName: workoutName || '',
+      notes: notes || ''
+    };
+    await db.put('prs', pr);
+    closeModal();
+    hapticSuccess();
+    showConfetti();
+    allPrs.unshift(pr);
+    render();
+  });
 }
