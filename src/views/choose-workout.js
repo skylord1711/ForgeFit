@@ -59,9 +59,8 @@ function render() {
                 </button>
               </div>
             </div>
-            <div style="padding:0 16px 12px;font-size:13px;color:var(--text-tertiary);cursor:pointer;" data-edit-exercises="${t.id}" title="Tap to edit exercises">
+            <div style="padding:0 16px 12px;font-size:13px;color:var(--text-tertiary);">
               ${(t.exercises || []).map(e => e.name).join(' · ')}
-              <span style="color:var(--text-tertiary);margin-left:6px;font-size:12px;">✏️</span>
             </div>
           </div>
         `).join('') : html`
@@ -70,6 +69,13 @@ function render() {
             <div class="empty-state-text">Create your first workout template to get started.</div>
           </div>
         `}
+      </div>
+
+      <div class="mt-16 mb-8">
+        <button class="btn btn-secondary w-full" data-nav="manage-templates">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Manage Workouts
+        </button>
       </div>
     </div>
   `;
@@ -100,16 +106,6 @@ function setupListeners() {
       const id = el.dataset.templateOptions;
       const template = templates.find(t => t.id === id);
       if (template) showTemplateOptions(template);
-    });
-  });
-
-  container.querySelectorAll('[data-edit-exercises]').forEach(el => {
-    el.addEventListener('click', (e) => {
-      e.stopPropagation();
-      hapticLight();
-      const id = el.dataset.editExercises;
-      const template = templates.find(t => t.id === id);
-      if (template) showEditExercisesModal(template);
     });
   });
 

@@ -8,6 +8,7 @@ import { renderHistory, renderWorkoutSummary } from './views/history.js';
 import { renderPrs } from './views/prs.js';
 import { renderSettings } from './views/settings.js';
 import { renderExerciseDetail } from './views/exercise-detail.js';
+import { renderManageTemplates } from './views/manage-templates.js';
 
 let currentCleanup = null;
 
@@ -54,6 +55,12 @@ export async function initApp() {
     renderBottomNav('');
     if (currentCleanup) currentCleanup();
     await renderExerciseDetail(params.name);
+  });
+
+  router.add('manage-templates', async () => {
+    renderBottomNav('');
+    if (currentCleanup) currentCleanup();
+    await renderManageTemplates();
   });
 
   router.add('settings', async () => {
