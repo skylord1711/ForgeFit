@@ -8,6 +8,7 @@ let templates = [];
 
 export async function renderManageTemplates() {
   templates = await db.getAll('templates');
+  templates.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
   render();
 }
 
@@ -31,8 +32,16 @@ function render() {
       <div class="exercise-list">
         ${templates.length ? templates.map((t, i) => html`
           <div class="exercise-card list-item animate-fade-in-up stagger-${Math.min(i + 1, 8)}">
-            <div class="exercise-card-header" style="cursor:default;">
-              <span class="exercise-name">${t.name}</span>
+            <div class="exercise-card-header" style="cursor:default;padding-bottom:8px;">
+              <div class="flex items-center gap-8">
+                <button class="btn-icon" data-reorder-tpl-up="${t.id}" style="width:28px;height:28px;${i === 0 ? 'opacity:0.2;pointer-events:none;' : ''}" title="Move up">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                </button>
+                <button class="btn-icon" data-reorder-tpl-down="${t.id}" style="width:28px;height:28px;${i === templates.length - 1 ? 'opacity:0.2;pointer-events:none;' : ''}" title="Move down">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <span class="exercise-name" style="margin-left:4px;">${t.name}</span>
+              </div>
               <span class="chip">${(t.exercises || []).length} ex</span>
             </div>
             <div style="padding:0 16px 4px;font-size:13px;color:var(--text-tertiary);">
@@ -80,6 +89,36 @@ function setupListeners() {
   container.querySelector('[data-action="create-template"]')?.addEventListener('click', () => {
     hapticLight();
     showCreateTemplateModal();
+  });
+
+  container.querySelectorAll('[data-reorder-tpl-up]').forEach(el => {
+    el.addEventListener('click', async () => {
+      hapticLight();
+      const id = el.dataset.reorderTplUp;
+      const idx = templates.findIndex(t => t.id === id);
+      if (idx > 0) {
+        [templates[idx - 1], templates[idx]] = [templates[idx], templates[idx - 1]];
+        for (let i = 0; i < templates.length; i++) {
+          await db.put('templates', { ...templates[i], order: i });
+        }
+        render();
+      }
+    });
+  });
+
+  container.querySelectorAll('[data-reorder-tpl-down]').forEach(el => {
+    el.addEventListener('click', async () => {
+      hapticLight();
+      const id = el.dataset.reorderTplDown;
+      const idx = templates.findIndex(t => t.id === id);
+      if (idx < templates.length - 1) {
+        [templates[idx], templates[idx + 1]] = [templates[idx + 1], templates[idx]];
+        for (let i = 0; i < templates.length; i++) {
+          await db.put('templates', { ...templates[i], order: i });
+        }
+        render();
+      }
+    });
   });
 
   container.querySelectorAll('[data-edit-template]').forEach(el => {
