@@ -57,8 +57,8 @@ export async function initApp() {
     await renderExerciseDetail(params.name);
   });
 
-  router.add('manage-templates', async () => {
-    renderBottomNav('');
+  router.add('workouts', async () => {
+    renderBottomNav('workouts');
     if (currentCleanup) currentCleanup();
     await renderManageTemplates();
   });

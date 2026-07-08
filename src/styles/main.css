@@ -470,8 +470,8 @@ body {
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-around;
-  align-items: center;
-  padding: 8px 0 calc(8px + var(--safe-bottom));
+  align-items: flex-start;
+  padding: 10px 4px calc(6px + var(--safe-bottom));
   z-index: 100;
   height: var(--nav-height);
 }
@@ -480,7 +480,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   background: none;
   border: none;
   color: var(--text-tertiary);
@@ -488,12 +488,12 @@ body {
   font-size: 10px;
   font-weight: 500;
   cursor: pointer;
-  padding: 4px 12px;
+  padding: 6px 8px 2px;
   transition: all var(--transition);
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   user-select: none;
-  min-width: 56px;
+  min-width: 48px;
 }
 
 .nav-item.active {
