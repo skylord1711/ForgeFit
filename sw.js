@@ -1,38 +1,6 @@
 const CACHE = 'forgefit-v2';
-const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/src/index.js',
-  '/src/app.js',
-  '/src/db.js',
-  '/src/router.js',
-  '/src/utils/time.js',
-  '/src/utils/helpers.js',
-  '/src/utils/haptics.js',
-  '/src/styles/main.css',
-  '/src/styles/animations.css',
-  '/src/components/bottom-nav.js',
-  '/src/components/exercise-card.js',
-  '/src/components/modal.js',
-  '/src/components/timer.js',
-  '/src/views/home.js',
-  '/src/views/history.js',
-  '/src/views/prs.js',
-  '/src/views/settings.js',
-  '/src/views/workout.js',
-  '/src/views/choose-workout.js',
-  '/src/views/exercise-detail.js',
-  '/icons/icon-192.svg',
-  '/icons/icon-512.svg'
-];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE).then((cache) =>
-      Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)))
-    )
-  );
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
