@@ -9,6 +9,9 @@ import { renderPrs } from './views/prs.js';
 import { renderSettings } from './views/settings.js';
 import { renderExerciseDetail } from './views/exercise-detail.js';
 import { renderManageTemplates } from './views/manage-templates.js';
+import { renderNotes } from './views/notes.js';
+import { renderCreatine } from './views/creatine.js';
+import { renderCalendar } from './views/calendar.js';
 
 let currentCleanup = null;
 
@@ -58,7 +61,7 @@ export async function initApp() {
   });
 
   router.add('workouts', async () => {
-    renderBottomNav('workouts');
+    renderBottomNav('');
     if (currentCleanup) currentCleanup();
     await renderManageTemplates();
   });
@@ -67,6 +70,24 @@ export async function initApp() {
     renderBottomNav('settings');
     if (currentCleanup) currentCleanup();
     await renderSettings();
+  });
+
+  router.add('notes', async () => {
+    renderBottomNav('notes');
+    if (currentCleanup) currentCleanup();
+    await renderNotes();
+  });
+
+  router.add('creatine', async () => {
+    renderBottomNav('');
+    if (currentCleanup) currentCleanup();
+    await renderCreatine();
+  });
+
+  router.add('calendar', async () => {
+    renderBottomNav('');
+    if (currentCleanup) currentCleanup();
+    await renderCalendar();
   });
 
   router.init();

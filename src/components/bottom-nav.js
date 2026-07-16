@@ -5,7 +5,7 @@ export function renderBottomNav(activeRoute) {
   const nav = document.getElementById('bottom-nav');
   const items = [
     { id: 'home', label: 'Home', icon: homeIcon },
-    { id: 'workouts', label: 'Workouts', icon: workoutsIcon },
+    { id: 'notes', label: 'Notes', icon: notesIcon },
     { id: 'history', label: 'History', icon: historyIcon },
     { id: 'prs', label: 'PRs', icon: prIcon },
     { id: 'settings', label: 'Settings', icon: settingsIcon },
@@ -33,9 +33,13 @@ const homeIcon = html`
   </svg>
 `;
 
-const workoutsIcon = html`
+const notesIcon = html`
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M6.5 6.5L17.5 17.5M6.5 17.5L17.5 6.5M6 20h12M6 4h12"/>
+    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+    <polyline points="10 9 9 9 8 9"/>
   </svg>
 `;
 

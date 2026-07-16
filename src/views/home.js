@@ -1,8 +1,18 @@
-import { html } from '../utils/helpers.js';
+import { html, debounce } from '../utils/helpers.js';
 import { getCurrentDateFormatted, getCurrentTimeFormatted, getTodayKey, getYesterdayKey, formatDateFull, formatTime, formatDuration, getElapsedSeconds } from '../utils/time.js';
 import { hapticMedium, hapticLight } from '../utils/haptics.js';
 import db from '../db.js';
 import router from '../router.js';
+import { getDailyFact, getFactPool } from '../data/fun-facts.js';
+import { getHolidayForDate } from '../data/holidays.js';
+import { showModal, closeModal, renderModal } from '../components/modal.js';
+import {
+  renderTodayWorkoutModule,
+  renderCreatineModule,
+  renderFunFactModule,
+  renderCalendarModule,
+  getEnabledModules
+} from '../components/dashboard-modules.js';
 
 export async function renderHome() {
   const today = getTodayKey();
@@ -14,6 +24,28 @@ export async function renderHome() {
   const yesterdayWorkout = allWorkouts.find(w => w.date === yesterday && w.completed);
 
   const hasMissed = !yesterdayWorkout && !todayWorkout;
+  const enabledModules = await getEnabledModules();
+  const creatineEntry = (await db.getAll('creatine')).find(e => e.date === today);
+  const creatineSettings = await db.getSetting('creatineSettings', null);
+  const funFactCategories = await db.getSetting('funFactCategories', ['fitness', 'science', 'body', 'nutrition']);
+  const favoriteFacts = await db.getSetting('favoriteFacts', []);
+  const allEvents = await db.getAll('events');
+  const calendarEvents = allEvents.filter(e => e.type !== 'holiday');
+  const todayHoliday = getHolidayForDate(today);
+  const currentFactData = await db.getSetting('currentFact', null);
+  let fact;
+
+  if (currentFactData && currentFactData.date === today) {
+    const pool = getFactPool(funFactCategories);
+    fact = pool[currentFactData.index] || getDailyFact(today, funFactCategories);
+  } else {
+    fact = getDailyFact(today, funFactCategories);
+    if (fact) {
+      const pool = getFactPool(funFactCategories);
+      const idx = pool.indexOf(fact);
+      await db.setSetting('currentFact', { date: today, index: idx >= 0 ? idx : 0 });
+    }
+  }
 
   let dateTimeInterval;
   let timerInterval;
@@ -21,19 +53,6 @@ export async function renderHome() {
   const render = () => {
     const currentTime = getCurrentTimeFormatted();
     const currentDate = getCurrentDateFormatted();
-
-    let mainContent = '';
-
-    if (todayWorkout?.isRestDay) {
-      mainContent = restDayCard(todayWorkout);
-    } else if (todayWorkout) {
-      mainContent = completedWorkoutCard(todayWorkout);
-    } else if (activeWorkout) {
-      const elapsed = getElapsedSeconds(activeWorkout.startTime);
-      mainContent = activeWorkoutCard(activeWorkout, elapsed);
-    } else {
-      mainContent = startWorkoutButton();
-    }
 
     const container = document.getElementById('view-container');
     container.innerHTML = html`
@@ -62,7 +81,27 @@ export async function renderHome() {
           </div>
         ` : ''}
 
-        ${mainContent}
+        ${todayHoliday ? html`
+          <div class="holiday-banner animate-fade-in-down">
+            <span style="font-size:18px;">${todayHoliday.emoji}</span>
+            <div style="font-size:14px;font-weight:500;">${todayHoliday.name}</div>
+          </div>
+        ` : ''}
+
+        <div class="dashboard-modules" id="dashboard-modules">
+          ${enabledModules.map((moduleId, i) => {
+            const moduleHtml = renderModule(moduleId, {
+              todayWorkout, activeWorkout,
+              creatineEntry, creatineSettings, fact, favoriteFacts,
+              allWorkouts, today, calendarEvents
+            });
+            return moduleHtml ? html`
+              <div class="dashboard-module-wrapper animate-fade-in-up stagger-${Math.min(i + 1, 8)}" data-module="${moduleId}">
+                ${moduleHtml}
+              </div>
+            ` : '';
+          }).join('')}
+        </div>
       </div>
     `;
 
@@ -82,7 +121,7 @@ export async function renderHome() {
       }, 1000);
     }
 
-    setupHomeListeners(container);
+    setupHomeListeners(container, today, render);
   };
 
   render();
@@ -93,92 +132,22 @@ export async function renderHome() {
   };
 }
 
-function completedWorkoutCard(workout) {
-  return html`
-    <div class="glass complete-card animate-scale-in mt-8">
-      <div class="complete-icon">✅</div>
-      <div class="complete-title">Workout Completed</div>
-      <div style="font-size:20px;font-weight:600;color:var(--accent);margin-bottom:8px;">${workout.name}</div>
-      <div style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;">
-        ${formatDateFull(workout.date)}<br>
-        ${workout.startTime ? `Started: ${formatTime(workout.startTime)}` : ''}${workout.finishTime ? ` · Finished: ${formatTime(workout.finishTime)}` : ''}<br>
-        ${workout.duration ? `Duration: ${formatDuration(workout.duration)}` : ''}
-      </div>
-      <div class="complete-message" style="margin-bottom:20px;">
-        You've completed today's workout. Great work! See you tomorrow.
-      </div>
-      <div class="flex flex-col gap-8">
-        <button class="btn btn-secondary" data-view-summary="${workout.id}">View Workout Summary</button>
-        <button class="btn btn-ghost" data-nav="history">History</button>
-        <button class="btn btn-ghost" data-nav="prs">Personal Records</button>
-        <button class="btn btn-ghost" data-restart-today style="color:var(--orange);">Restart Today</button>
-      </div>
-    </div>
-  `;
+function renderModule(moduleId, data) {
+  switch (moduleId) {
+    case 'today-workout':
+      return renderTodayWorkoutModule(data.todayWorkout, data.activeWorkout);
+    case 'creatine':
+      return renderCreatineModule(data.creatineEntry, data.creatineSettings);
+    case 'fun-fact':
+      return renderFunFactModule(data.fact, data.favoriteFacts);
+    case 'calendar':
+      return renderCalendarModule(data.calendarEvents, data.today);
+    default:
+      return '';
+  }
 }
 
-function restDayCard(workout) {
-  return html`
-    <div class="glass complete-card animate-scale-in mt-8">
-      <div style="font-size:48px;text-align:center;margin-bottom:12px;">🛌</div>
-      <div class="complete-title" style="color:var(--purple);">Rest Day</div>
-      <div style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;text-align:center;">
-        ${formatDateFull(workout.date)}
-      </div>
-      <div class="complete-message" style="margin-bottom:20px;">
-        Recovery is just as important as training.<br>
-        Take the day off and come back stronger tomorrow.
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px;">
-        <span class="chip chip-purple">😴 Sleep</span>
-        <span class="chip chip-purple">💪 Protein</span>
-        <span class="chip chip-purple">💧 Hydrate</span>
-        <span class="chip chip-purple">📊 Review</span>
-      </div>
-      <div class="flex flex-col gap-8">
-        <button class="btn btn-ghost" data-nav="history" style="background:var(--surface);">History</button>
-        <button class="btn btn-ghost" data-nav="prs">Personal Records</button>
-        <button class="btn btn-ghost" data-undo-rest-day style="color:var(--orange);">Undo Rest Day</button>
-      </div>
-    </div>
-  `;
-}
-
-function activeWorkoutCard(workout, elapsed) {
-  return html`
-    <div class="glass animate-scale-in mt-8" style="padding:24px;">
-      <div class="timer-label">Workout in Progress</div>
-      <div class="timer-display" id="active-timer" style="font-size:36px;padding:12px 0;">${formatDuration(elapsed)}</div>
-      <div style="font-size:18px;font-weight:600;color:var(--accent);margin-bottom:4px;">${workout.name}</div>
-      <div style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;">
-        Started: ${formatTime(workout.startTime)}
-      </div>
-      <button class="btn btn-primary w-full" data-nav="workout">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        Resume Workout
-      </button>
-    </div>
-  `;
-}
-
-function startWorkoutButton() {
-  return html`
-    <div class="mt-24 animate-fade-in-up">
-      <button class="btn btn-primary btn-lg w-full animate-pulse-ring" data-nav="choose-workout" style="font-size:20px;font-weight:700;">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        Start Workout
-      </button>
-      <div style="text-align:center;margin-top:12px;">
-        <span class="chip">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Ready to train
-        </span>
-      </div>
-    </div>
-  `;
-}
-
-function setupHomeListeners(container) {
+function setupHomeListeners(container, today, rerender) {
   container.querySelectorAll('[data-nav]').forEach(el => {
     el.addEventListener('click', () => {
       router.navigate(el.dataset.nav);
@@ -194,7 +163,6 @@ function setupHomeListeners(container) {
   container.querySelectorAll('[data-restart-today]').forEach(el => {
     el.addEventListener('click', async () => {
       hapticLight();
-      const today = getTodayKey();
       const allWorkouts = await db.getAll('workouts');
       const todaysWorkouts = allWorkouts.filter(w => w.date === today);
       for (const w of todaysWorkouts) {
@@ -207,7 +175,6 @@ function setupHomeListeners(container) {
   container.querySelectorAll('[data-undo-rest-day]').forEach(el => {
     el.addEventListener('click', async () => {
       hapticLight();
-      const today = getTodayKey();
       const allWorkouts = await db.getAll('workouts');
       const todaysRest = allWorkouts.filter(w => w.date === today && w.isRestDay);
       for (const w of todaysRest) {
@@ -217,5 +184,98 @@ function setupHomeListeners(container) {
     });
   });
 
+  document.getElementById('home-creatine-mark')?.addEventListener('click', async () => {
+    hapticMedium();
+    const now = new Date();
+    const entry = {
+      date: today,
+      taken: true,
+      time: now.toISOString(),
+      amount: (await db.getSetting('creatineSettings', null))?.amount || '5g'
+    };
+    await db.put('creatine', entry);
+    renderHome();
+  });
 
+  container.querySelectorAll('[data-reset-creatine]').forEach(el => {
+    el.addEventListener('click', async () => {
+      hapticMedium();
+      const entry = { date: today, taken: false, time: null, amount: null };
+      await db.put('creatine', entry);
+      renderHome();
+    });
+  });
+
+  document.getElementById('home-fact-next')?.addEventListener('click', async () => {
+    hapticLight();
+    const cats = await db.getSetting('funFactCategories', ['fitness', 'science', 'body', 'nutrition']);
+    const pool = getFactPool(cats);
+    if (!pool.length) return;
+    const currentFactData = await db.getSetting('currentFact', null);
+    const currentIdx = currentFactData?.date === today ? (currentFactData.index || 0) : 0;
+    const nextIdx = (currentIdx + 1) % pool.length;
+    await db.setSetting('currentFact', { date: today, index: nextIdx });
+    const newFact = pool[nextIdx];
+    if (newFact) {
+      const textEl = document.getElementById('fun-fact-text');
+      if (textEl) textEl.textContent = `"${newFact.text}"`;
+      const isFav = (await db.getSetting('favoriteFacts', [])).includes(newFact.text);
+      const favBtn = document.getElementById('home-fact-fav');
+      if (favBtn) {
+        favBtn.style.background = isFav ? 'var(--accent-dim)' : 'var(--surface)';
+        favBtn.style.color = isFav ? 'var(--accent)' : 'var(--text-secondary)';
+        favBtn.querySelector('svg').setAttribute('fill', isFav ? 'var(--accent)' : 'none');
+      }
+    }
+  });
+
+  document.getElementById('home-fact-fav')?.addEventListener('click', async () => {
+    hapticLight();
+    const favs = await db.getSetting('favoriteFacts', []);
+    const cats = await db.getSetting('funFactCategories', ['fitness', 'science', 'body', 'nutrition']);
+    const currentFactData = await db.getSetting('currentFact', null);
+    const pool = getFactPool(cats);
+    const currentIdx = currentFactData?.date === today ? (currentFactData.index || 0) : 0;
+    const fact = pool[currentIdx] || getDailyFact(today, cats);
+    if (!fact) return;
+    const idx = favs.indexOf(fact.text);
+    if (idx >= 0) {
+      favs.splice(idx, 1);
+    } else {
+      favs.push(fact.text);
+    }
+    await db.setSetting('favoriteFacts', favs);
+    renderHome();
+  });
+
+  document.getElementById('home-fact-favs')?.addEventListener('click', async () => {
+    hapticLight();
+    const favs = await db.getSetting('favoriteFacts', []);
+    if (!favs.length) return;
+    showModal(renderModal(
+      'Saved Facts',
+      html`<div style="max-height:50vh;overflow-y:auto;">
+        ${favs.map((text, i) => html`
+          <div style="padding:12px 0;${i < favs.length - 1 ? 'border-bottom:1px solid var(--border-light);' : ''}">
+            <div style="font-size:14px;color:var(--text-secondary);line-height:1.5;">"${text}"</div>
+            <button class="btn-icon" data-remove-fav="${i}" style="width:24px;height:24px;border:none;background:transparent;color:var(--text-tertiary);margin-top:4px;" title="Remove">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        `).join('')}
+      </div>`,
+      html`<button class="btn btn-ghost" data-close-modal style="min-height:40px;">Close</button>`
+    ));
+    document.querySelector('[data-close-modal]')?.addEventListener('click', closeModal);
+    document.querySelectorAll('[data-remove-fav]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        hapticLight();
+        const idx = parseInt(btn.dataset.removeFav, 10);
+        favs.splice(idx, 1);
+        await db.setSetting('favoriteFacts', favs);
+        closeModal();
+        renderHome();
+      });
+    });
+  });
 }

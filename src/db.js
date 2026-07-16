@@ -1,11 +1,12 @@
 const DB_NAME = 'forgefit';
-const DB_VERSION = 1;
+const DB_VERSION = 3;
 
 function openDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
+      const oldVersion = event.oldVersion;
       if (!db.objectStoreNames.contains('workouts')) {
         const store = db.createObjectStore('workouts', { keyPath: 'id' });
         store.createIndex('date', 'date', { unique: false });
@@ -22,6 +23,21 @@ function openDB() {
       }
       if (!db.objectStoreNames.contains('settings')) {
         db.createObjectStore('settings', { keyPath: 'key' });
+      }
+      if (oldVersion < 2) {
+        if (!db.objectStoreNames.contains('notes')) {
+          const store = db.createObjectStore('notes', { keyPath: 'id' });
+          store.createIndex('date', 'date', { unique: false });
+        }
+        if (!db.objectStoreNames.contains('creatine')) {
+          const store = db.createObjectStore('creatine', { keyPath: 'date' });
+        }
+      }
+      if (oldVersion < 3) {
+        if (!db.objectStoreNames.contains('events')) {
+          const store = db.createObjectStore('events', { keyPath: 'id' });
+          store.createIndex('date', 'date', { unique: false });
+        }
       }
     };
     request.onsuccess = () => resolve(request.result);

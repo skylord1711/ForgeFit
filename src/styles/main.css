@@ -850,3 +850,163 @@ body {
   color: var(--orange);
   text-align: center;
 }
+
+/* Holiday Banner */
+.holiday-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--purple-dim);
+  border: 1px solid rgba(108, 99, 255, 0.2);
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  color: var(--purple);
+}
+
+/* Dashboard Modules */
+.dashboard-modules {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-module-wrapper {
+  animation-fill-mode: both;
+}
+
+.dashboard-module {
+  transition: all var(--transition);
+}
+
+.module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.module-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--accent);
+}
+
+.toggle-switch input:checked + .toggle-slider > span {
+  left: 23px;
+}
+
+/* Notes Textarea */
+.notes-textarea {
+  resize: none;
+  min-height: 80px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Settings Module Row Drag */
+.settings-module-row {
+  transition: all 0.15s ease;
+}
+
+.settings-module-row[draggable="true"] {
+  cursor: grab;
+}
+
+.settings-module-row:active {
+  cursor: grabbing;
+}
+
+/* Creatine Calendar Grid */
+.creatine-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.creatine-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* Calendar */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal-header {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  padding: 4px 0 8px;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  gap: 2px;
+}
+
+.cal-day:active {
+  background: var(--surface);
+}
+
+.cal-day-today {
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+}
+
+.cal-day-today:active {
+  background: #00c853;
+}
+
+.cal-day-empty {
+  cursor: default;
+}
+
+.cal-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 4px;
+}
+
+.cal-emoji-btn {
+  transition: all var(--transition);
+}
+
+.cal-emoji-active {
+  border-color: var(--accent) !important;
+  background: var(--accent-dim) !important;
+}
