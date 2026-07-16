@@ -13,7 +13,6 @@ const PRECACHE_URLS = [
   '/src/styles/main.css',
   '/src/styles/animations.css',
   '/src/components/bottom-nav.js',
-  '/src/components/dashboard-modules.js',
   '/src/components/exercise-card.js',
   '/src/components/modal.js',
   '/src/components/timer.js',
@@ -24,17 +23,15 @@ const PRECACHE_URLS = [
   '/src/views/workout.js',
   '/src/views/choose-workout.js',
   '/src/views/exercise-detail.js',
-  '/src/views/creatine.js',
-  '/src/views/calendar.js',
-  '/src/views/notes.js',
-  '/src/views/manage-templates.js',
   '/icons/icon-192.svg',
   '/icons/icon-512.svg'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHE).then((cache) =>
+      Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)))
+    )
   );
   self.skipWaiting();
 });
